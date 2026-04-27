@@ -35,7 +35,7 @@ services:
       - ./kerberos/log4j.properties:/opt/kerby/log4j.properties:ro
 
   kafka:
-    image: confluentinc/cp-kafka:7.8.0
+    image: apache/kafka:3.9.0
     hostname: broker1.example.com
     container_name: kafka-kerberos
     depends_on:
@@ -46,9 +46,9 @@ services:
       - "9997:9997"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_PLAINTEXT_HOST:SASL_PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: SASL_PLAINTEXT://broker1.example.com:29092,SASL_PLAINTEXT_HOST://broker1.example.com:9092
-      KAFKA_LISTENERS: SASL_PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,SASL_PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: SASL_PLAINTEXT://broker1.example.com:9092
+      KAFKA_LISTENERS: SASL_PLAINTEXT://broker1.example.com:9092,CONTROLLER://broker1.example.com:29093
       KAFKA_INTER_BROKER_LISTENER_NAME: SASL_PLAINTEXT
       KAFKA_SASL_ENABLED_MECHANISMS: GSSAPI
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: GSSAPI
@@ -81,7 +81,7 @@ services:
     environment:
       JAVA_OPTS: -Djava.security.krb5.conf=/kerby/client/krb5.conf
       KAFKA_CLUSTERS_0_NAME: kerberos-local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker1.example.com:29092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker1.example.com:9092
       KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL: SASL_PLAINTEXT
       KAFKA_CLUSTERS_0_PROPERTIES_SASL_MECHANISM: GSSAPI
       KAFKA_CLUSTERS_0_PROPERTIES_SASL_KERBEROS_SERVICE_NAME: kafka
@@ -91,7 +91,7 @@ services:
       - ./kerberos/generated:/kerby:ro
 
   kafka-init-topics:
-    image: confluentinc/cp-kafka:7.8.0
+    image: apache/kafka:3.9.0
     depends_on:
       - kafka
     environment:
@@ -101,10 +101,10 @@ services:
       - -ec
       - |
         for i in {1..60}; do
-          kafka-topics --bootstrap-server broker1.example.com:29092 --command-config /etc/kafka/kerberos/client.properties --list >/dev/null && break
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker1.example.com:9092 --command-config /etc/kafka/kerberos/client.properties --list >/dev/null && break
           sleep 2
         done
-        kafka-topics --bootstrap-server broker1.example.com:29092 --command-config /etc/kafka/kerberos/client.properties --create --topic kerberos.messages --partitions 1 --replication-factor 1 --if-not-exists
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server broker1.example.com:9092 --command-config /etc/kafka/kerberos/client.properties --create --topic kerberos.messages --partitions 1 --replication-factor 1 --if-not-exists
     volumes:
       - ./kerberos/generated:/kerby:ro
       - ./kerberos/client.properties:/etc/kafka/kerberos/client.properties:ro

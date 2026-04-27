@@ -13,7 +13,7 @@ docker compose -f ui-kerberos.yaml up -d
 Kafka UI is available at:
 
 ```text
-http://localhost:8080
+http://localhost:7080
 ```
 
 The Kerby KDC writes generated files into `kerberos/generated`:
