@@ -8,6 +8,7 @@
 6. [kafka-ui-jmx-secured.yml](./ui-jmx-secured.yml) - Kafka's JMX with SSL and authentication.
 7. [kafka-ui-reverse-proxy.yaml](./nginx-proxy.yaml) - An example of using the app behind a proxy (like nginx).
 8. [kafka-ui-sasl.yaml](./ui-sasl.yaml) - SASL authentication for Kafka.
-9. [kafka-ui-traefik-proxy.yaml](./traefik-proxy.yaml) - Traefik-specific proxy configuration.
-10. [kafka-ui-with-jmx-exporter.yaml](./ui-with-jmx-exporter.yaml) - A configuration with 2 Kafka clusters with enabled Prometheus JMX exporters instead of JMX.
-11. [kafka-with-zookeeper.yaml](./kafka-zookeeper.yaml) - An example of using Kafka with ZooKeeper.
+9. [kafka-ui-kerberos.yaml](./ui-kerberos.yaml) - SASL/GSSAPI authentication for Kafka using a local Kerby KDC.
+10. [kafka-ui-traefik-proxy.yaml](./traefik-proxy.yaml) - Traefik-specific proxy configuration.
+11. [kafka-ui-with-jmx-exporter.yaml](./ui-with-jmx-exporter.yaml) - A configuration with 2 Kafka clusters with enabled Prometheus JMX exporters instead of JMX.
+12. [kafka-with-zookeeper.yaml](./kafka-zookeeper.yaml) - An example of using Kafka with ZooKeeper.

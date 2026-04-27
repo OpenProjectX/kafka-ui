@@ -1,3 +1,5 @@
+import com.github.gradle.node.pnpm.task.PnpmTask
+
 plugins {
   alias(libs.plugins.node.gradle)
 }
@@ -43,4 +45,14 @@ tasks.register('buildFrontend', PnpmTask) {
     "VITE_TAG"   : project.version,
     "VITE_COMMIT": "git rev-parse --short HEAD".execute().text.trim()
   ]
+}
+
+
+tasks.withType(PnpmTask).configureEach {
+  // Make sure subprocesses (pnpm -> node -> openapi-generator-cli) can find Java
+  def javaHome = System.getProperty("java.home")
+  logger.info("using java home for pnpm build {}", javaHome)
+  environment.putAll(System.getenv())
+  environment.put("JAVA_HOME", javaHome)
+  environment.put("PATH", "${javaHome}/bin:${System.getenv('PATH') ?: ''}")
 }
