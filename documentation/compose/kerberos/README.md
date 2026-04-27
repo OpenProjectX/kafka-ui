@@ -16,12 +16,19 @@ Kafka UI is available at:
 http://localhost:7080
 ```
 
+Schema Registry is available at:
+
+```text
+http://localhost:8085
+```
+
 The Kerby KDC writes generated files into `kerberos/generated`:
 
 ```text
 kerberos/generated/client/krb5.conf
 kerberos/generated/keytabs/kafka-broker1.keytab
 kerberos/generated/keytabs/kafbat-ui.keytab
+kerberos/generated/keytabs/schema-registry.keytab
 ```
 
 For running the API from the host with the `kerberos` Spring profile, make

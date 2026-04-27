@@ -22,11 +22,12 @@ services:
       KERBY_SERVICE_KEYTAB: /var/lib/kerby/keytabs/http-api.keytab
       KERBY_EXTRA_SERVICE_PRINCIPALS: >-
         kafka/broker1.example.com@EXAMPLE.COM:/var/lib/kerby/keytabs/kafka-broker1.keytab,
-        kafbat-ui/kafbat-ui.example.com@EXAMPLE.COM:/var/lib/kerby/keytabs/kafbat-ui.keytab
+        kafbat-ui/kafbat-ui.example.com@EXAMPLE.COM:/var/lib/kerby/keytabs/kafbat-ui.keytab,
+        schema-registry/schema-registry.example.com@EXAMPLE.COM:/var/lib/kerby/keytabs/schema-registry.keytab
     healthcheck:
       test:
         - CMD-SHELL
-        - test -f /var/lib/kerby/client/krb5.conf && test -f /var/lib/kerby/keytabs/kafka-broker1.keytab && test -f /var/lib/kerby/keytabs/kafbat-ui.keytab
+        - test -f /var/lib/kerby/client/krb5.conf && test -f /var/lib/kerby/keytabs/kafka-broker1.keytab && test -f /var/lib/kerby/keytabs/kafbat-ui.keytab && test -f /var/lib/kerby/keytabs/schema-registry.keytab
       interval: 5s
       timeout: 5s
       retries: 20
@@ -65,23 +66,57 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker1.example.com:29093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
-      KAFKA_SUPER_USERS: "User:kafka/broker1.example.com@EXAMPLE.COM;User:kafbat-ui/kafbat-ui.example.com@EXAMPLE.COM"
+      KAFKA_SUPER_USERS: "User:kafka/broker1.example.com@EXAMPLE.COM;User:kafbat-ui/kafbat-ui.example.com@EXAMPLE.COM;User:schema-registry/schema-registry.example.com@EXAMPLE.COM"
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     volumes:
       - ./kerberos/generated:/kerby:ro
       - ./kerberos/kafka_server_jaas.conf:/etc/kafka/kerberos/kafka_server_jaas.conf:ro
+    networks:
+      default:
+        aliases:
+          - broker1.example.com
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.8.0
+    hostname: schema-registry.example.com
+    container_name: schema-registry-kerberos
+    depends_on:
+      - kafka
+    ports:
+      - "8085:8085"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry.example.com
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8085
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: SASL_PLAINTEXT://broker1.example.com:9092
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: SASL_PLAINTEXT
+      SCHEMA_REGISTRY_KAFKASTORE_SASL_MECHANISM: GSSAPI
+      SCHEMA_REGISTRY_KAFKASTORE_SASL_KERBEROS_SERVICE_NAME: kafka
+      SCHEMA_REGISTRY_KAFKASTORE_SASL_JAAS_CONFIG: com.sun.security.auth.module.Krb5LoginModule required useKeyTab=true storeKey=true keyTab="/kerby/keytabs/schema-registry.keytab" principal="schema-registry/schema-registry.example.com@EXAMPLE.COM";
+      KAFKA_OPTS: -Djava.security.krb5.conf=/kerby/client/krb5.conf
+      KRB5_CONFIG: /kerby/client/krb5.conf
+      SCHEMA_REGISTRY_OPTS: -Djava.security.krb5.conf=/kerby/client/krb5.conf
+      SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: http
+      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
+    volumes:
+      - ./kerberos/generated:/kerby:ro
+    networks:
+      default:
+        aliases:
+          - schema-registry.example.com
 
   kafbat-ui:
     container_name: kafbat-ui-kerberos
     image: ghcr.io/kafbat/kafka-ui:latest
     depends_on:
       - kafka
+      - schema-registry
     ports:
       - "7080:8080"
     environment:
       JAVA_OPTS: -Djava.security.krb5.conf=/kerby/client/krb5.conf
       KAFKA_CLUSTERS_0_NAME: kerberos-local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker1.example.com:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry.example.com:8085
       KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL: SASL_PLAINTEXT
       KAFKA_CLUSTERS_0_PROPERTIES_SASL_MECHANISM: GSSAPI
       KAFKA_CLUSTERS_0_PROPERTIES_SASL_KERBEROS_SERVICE_NAME: kafka
