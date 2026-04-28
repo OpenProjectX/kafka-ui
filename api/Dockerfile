@@ -4,11 +4,13 @@
 # We include the SHA to ensure image immutability
 FROM eclipse-temurin:25.0.2_10-jdk-noble
 
-RUN apk add --no-cache \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     # snappy codec
     gcompat \
     # configuring timezones
-    tzdata
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
 RUN addgroup -S kafkaui && adduser -S kafkaui -G kafkaui
 
 # creating folder for dynamic config usage (certificates uploads, etc)
