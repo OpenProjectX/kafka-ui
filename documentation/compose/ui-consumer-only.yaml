@@ -17,7 +17,7 @@ services:
       DYNAMIC_CONFIG_ENABLED: "false"
 
   kafka-init-acls-consumer-only:
-    image: confluentinc/cp-kafka:7.8.0
+    image: apache/kafka:3.9.0
     depends_on:
       - kafka-consumer-only
     command:
@@ -31,21 +31,21 @@ services:
           > /tmp/admin.properties
 
         for i in {1..60}; do
-          kafka-topics --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --list >/dev/null && break
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --list >/dev/null && break
           sleep 2
         done
 
-        kafka-topics --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --create --topic consumer.messages --partitions 3 --replication-factor 1 --if-not-exists
-        kafka-topics --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --create --topic consumer.audit --partitions 1 --replication-factor 1 --if-not-exists
-        kafka-topics --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --create --topic consumer.payments --partitions 2 --replication-factor 1 --if-not-exists
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --create --topic consumer.messages --partitions 3 --replication-factor 1 --if-not-exists
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --create --topic consumer.audit --partitions 1 --replication-factor 1 --if-not-exists
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --create --topic consumer.payments --partitions 2 --replication-factor 1 --if-not-exists
 
-        kafka-acls --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --add --allow-principal User:kafka-ui-consumer --operation Read --operation Describe --topic '*'
-        kafka-acls --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --add --allow-principal User:kafka-ui-consumer --operation Read --group '*'
+        /opt/kafka/bin/kafka-acls.sh --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --add --allow-principal User:kafka-ui-consumer --operation Read --operation Describe --topic '*'
+        /opt/kafka/bin/kafka-acls.sh --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --add --allow-principal User:kafka-ui-consumer --operation Read --group '*'
 
-        kafka-acls --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --list --principal User:kafka-ui-consumer
+        /opt/kafka/bin/kafka-acls.sh --bootstrap-server kafka-consumer-only:29092 --command-config /tmp/admin.properties --list --principal User:kafka-ui-consumer
 
   kafka-consumer-only:
-    image: confluentinc/cp-kafka:7.8.0
+    image: apache/kafka:3.9.0
     hostname: kafka-consumer-only
     command:
       - /bin/bash
@@ -60,7 +60,7 @@ services:
           '  user_kafka-ui-consumer="consumer-secret";' \
           '};' \
           > /tmp/kafka_server.conf
-        exec /etc/confluent/docker/run
+        exec /etc/kafka/docker/run
     ports:
       - "19092:19092"
       - "19997:9997"
@@ -72,7 +72,7 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_PLAINTEXT_HOST:SASL_PLAINTEXT'
       KAFKA_ADVERTISED_LISTENERS: 'SASL_PLAINTEXT://kafka-consumer-only:29092,SASL_PLAINTEXT_HOST://localhost:19092'
-      KAFKA_LISTENERS: 'SASL_PLAINTEXT://0.0.0.0:29092,SASL_PLAINTEXT_HOST://0.0.0.0:19092,CONTROLLER://0.0.0.0:29093'
+      KAFKA_LISTENERS: 'SASL_PLAINTEXT://kafka-consumer-only:29092,SASL_PLAINTEXT_HOST://kafka-consumer-only:19092,CONTROLLER://kafka-consumer-only:29093'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'SASL_PLAINTEXT'
       KAFKA_SASL_ENABLED_MECHANISMS: 'PLAIN'
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: 'PLAIN'
