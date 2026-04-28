@@ -27,15 +27,27 @@ The Kerby KDC writes generated files into `kerberos/generated`:
 ```text
 kerberos/generated/client/krb5.conf
 kerberos/generated/keytabs/kafka-broker1.keytab
+kerberos/generated/keytabs/kafka-broker2.keytab
 kerberos/generated/keytabs/kafbat-ui.keytab
+kerberos/generated/keytabs/mm2.keytab
 kerberos/generated/keytabs/schema-registry.keytab
 ```
 
-For running the API from the host with the `kerberos` Spring profile, make
-`broker1.example.com` resolve locally:
+MirrorMaker 2 replicates these primary topics to the standby cluster:
+
+```text
+kerberos.messages
+primary.orders
+primary.payments
+primary.audit
+```
+
+For running the API from the host with the `kerberos` Spring profile, make the
+Kafka broker names resolve locally:
 
 ```bash
 echo '127.0.0.1 broker1.example.com' | sudo tee -a /etc/hosts
+echo '127.0.0.1 broker2.example.com' | sudo tee -a /etc/hosts
 ```
 
 Run the API with the host krb5 config:

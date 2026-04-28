@@ -23,3 +23,17 @@ kafka:
           storeKey=true
           keyTab="/data/Git/kafka-ui/documentation/compose/kerberos/generated/keytabs/kafbat-ui.keytab"
           principal="kafbat-ui/kafbat-ui.example.com@EXAMPLE.COM";
+    - name: kerberos-standby
+      # Requires broker2.example.com to resolve to 127.0.0.1 when the API runs on the host.
+      bootstrapServers: broker2.example.com:9093
+      readOnly: false
+      properties:
+        security.protocol: SASL_PLAINTEXT
+        sasl.mechanism: GSSAPI
+        sasl.kerberos.service.name: kafka
+        sasl.jaas.config: >-
+          com.sun.security.auth.module.Krb5LoginModule required
+          useKeyTab=true
+          storeKey=true
+          keyTab="/data/Git/kafka-ui/documentation/compose/kerberos/generated/keytabs/kafbat-ui.keytab"
+          principal="kafbat-ui/kafbat-ui.example.com@EXAMPLE.COM";
