@@ -1,0 +1,19 @@
+auth:
+  type: DISABLED
+
+logging:
+  level:
+    root: INFO
+    io.kafbat.ui: DEBUG
+
+kafka:
+  clusters:
+    - name: consumer-only
+      bootstrapServers: localhost:19092
+      properties:
+        security.protocol: SASL_PLAINTEXT
+        sasl.mechanism: PLAIN
+        sasl.jaas.config: >-
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username="kafka-ui-consumer"
+          password="consumer-secret";
