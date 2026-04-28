@@ -6,12 +6,10 @@ FROM eclipse-temurin:25.0.2_10-jdk-noble
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    # snappy codec
-    gcompat \
     # configuring timezones
     tzdata \
     && rm -rf /var/lib/apt/lists/*
-RUN addgroup -S kafkaui && adduser -S kafkaui -G kafkaui
+RUN groupadd --system kafkaui && useradd --system --gid kafkaui kafkaui
 
 # creating folder for dynamic config usage (certificates uploads, etc)
 RUN mkdir /etc/kafkaui/
