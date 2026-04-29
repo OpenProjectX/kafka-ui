@@ -2,7 +2,7 @@
 services:
 
   kafbat-ui-consumer-only:
-    image: ghcr.io/kafbat/kafka-ui:latest
+    image: ghcr.io/openprojectx/kafka-ui:0.0.1-SNAPSHOT
     ports:
       - 7081:8080
     depends_on:
