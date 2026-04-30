@@ -40,6 +40,11 @@ import {
   TopicFormFormattedParams,
 } from 'lib/interfaces/topic';
 
+type BatchCreateTopicMessage = CreateTopicMessage & {
+  partitions?: number[];
+  messageCount?: number;
+};
+
 export const topicKeys = {
   all: (clusterName: ClusterName) =>
     ['clusters', clusterName, 'topics'] as const,
@@ -326,11 +331,11 @@ export function useRecreateTopic(props: GetTopicDetailsRequest) {
 export function useSendMessage(props: GetTopicDetailsRequest) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (message: CreateTopicMessage) =>
+    mutationFn: (message: BatchCreateTopicMessage) =>
       messagesApi.sendTopicMessages({ ...props, createTopicMessage: message }),
     onSuccess: () => {
       showSuccessAlert({
-        message: `Message successfully sent`,
+        message: `Message(s) successfully sent`,
       });
       client.invalidateQueries({ queryKey: topicKeys.all(props.clusterName) });
     },

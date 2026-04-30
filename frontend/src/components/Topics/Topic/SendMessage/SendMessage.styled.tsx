@@ -37,3 +37,30 @@ export const FlexItem = styled.div`
     width: 100%;
   }
 `;
+
+export const NumberInput = styled.input`
+  background-color: ${({ theme }) => theme.input.backgroundColor.normal};
+  border: 1px ${({ theme }) => theme.input.borderColor.normal} solid;
+  border-radius: 4px;
+  color: ${({ theme }) => theme.input.color.normal};
+  height: 32px;
+  width: 100%;
+  padding-left: 12px;
+  font-size: 14px;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.input.borderColor.hover};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.input.borderColor.focus};
+  }
+
+  &:disabled {
+    color: ${({ theme }) => theme.input.color.disabled};
+    border-color: ${({ theme }) => theme.input.borderColor.disabled};
+    background-color: ${({ theme }) => theme.input.backgroundColor.disabled};
+    cursor: not-allowed;
+  }
+`;

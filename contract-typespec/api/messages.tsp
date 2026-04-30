@@ -220,6 +220,8 @@ model SmartFilterTestExecutionResult {
 
 model CreateTopicMessage {
   partition: int32;
+  partitions?: int32[];
+  messageCount?: int32;
   key?: string | null;
   headers?: Record<string>;
   value?: string | null;

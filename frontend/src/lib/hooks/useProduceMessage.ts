@@ -28,6 +28,7 @@ export const useProduceMessage = (): UseProduceMessageReturn => {
 
     if (message.partition !== undefined) {
       data.partition = message.partition;
+      data.partitions = [message.partition];
     }
 
     if (message.valueSerde) {

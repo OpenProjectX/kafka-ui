@@ -36,6 +36,8 @@ export const getDefaultValues = (serdes: TopicSerdeSuggestion) => {
     content: generateValueFromSchema(valueSerde),
     headers: undefined,
     partition: undefined,
+    partitions: [],
+    messageCount: 1,
     keySerde: keySerde?.name,
     valueSerde: valueSerde?.name,
   };

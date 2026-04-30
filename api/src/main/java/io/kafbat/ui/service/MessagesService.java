@@ -160,6 +160,13 @@ public class MessagesService {
         .flatMap(desc -> sendMessageImpl(cluster, desc, msg));
   }
 
+  public Mono<Void> sendMessages(KafkaCluster cluster, String topic,
+                                 CreateTopicMessageDTO msg) {
+    return withExistingTopic(cluster, topic)
+        .publishOn(Schedulers.boundedElastic())
+        .flatMap(desc -> sendMessagesImpl(cluster, desc, msg));
+  }
+
   private Mono<RecordMetadata> sendMessageImpl(KafkaCluster cluster,
                                                TopicDescription topicDescription,
                                                CreateTopicMessageDTO msg) {
@@ -194,6 +201,66 @@ public class MessagesService {
         }
       });
       return Mono.fromFuture(cf);
+    } catch (Throwable e) {
+      return Mono.error(e);
+    }
+  }
+
+  private Mono<Void> sendMessagesImpl(KafkaCluster cluster,
+                                      TopicDescription topicDescription,
+                                      CreateTopicMessageDTO msg) {
+    List<Integer> partitions = Optional.ofNullable(msg.getPartitions())
+        .filter(p -> !p.isEmpty())
+        .orElseGet(() -> List.of(Optional.ofNullable(msg.getPartition()).orElse(0)))
+        .stream()
+        .distinct()
+        .toList();
+    int messageCount = Optional.ofNullable(msg.getMessageCount()).orElse(1);
+
+    if (messageCount < 1) {
+      return Mono.error(new ValidationException("Message count must be greater than zero"));
+    }
+
+    if (partitions.stream().anyMatch(p -> p == null
+        || p < 0
+        || p > topicDescription.partitions().size() - 1)) {
+      return Mono.error(new ValidationException("Invalid partition"));
+    }
+
+    ProducerRecordCreator producerRecordCreator =
+        deserializationService.producerRecordCreator(
+            cluster,
+            topicDescription.name(),
+            msg.getKeySerde().get(),
+            msg.getValueSerde().get(),
+            msg.getKeySerdeProperties(),
+            msg.getValueSerdeProperties()
+        );
+
+    try (KafkaProducer<byte[], byte[]> producer = createProducer(cluster, Map.of())) {
+      CompletableFuture<?>[] futures = partitions.stream()
+          .flatMap(partition -> java.util.stream.IntStream.range(0, messageCount)
+              .mapToObj(i -> {
+                ProducerRecord<byte[], byte[]> producerRecord = producerRecordCreator.create(
+                    topicDescription.name(),
+                    partition,
+                    msg.getKey().orElse(null),
+                    msg.getValue().orElse(null),
+                    msg.getHeaders()
+                );
+                CompletableFuture<RecordMetadata> cf = new CompletableFuture<>();
+                producer.send(producerRecord, (metadata, exception) -> {
+                  if (exception != null) {
+                    cf.completeExceptionally(exception);
+                  } else {
+                    cf.complete(metadata);
+                  }
+                });
+                return cf;
+              }))
+          .toArray(CompletableFuture[]::new);
+      producer.flush();
+      return Mono.fromFuture(CompletableFuture.allOf(futures));
     } catch (Throwable e) {
       return Mono.error(e);
     }

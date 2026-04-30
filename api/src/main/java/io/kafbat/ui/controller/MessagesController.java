@@ -151,8 +151,8 @@ public class MessagesController extends AbstractController implements MessagesAp
 
     return validateAccess(context).then(
         createTopicMessage.flatMap(msg ->
-            messagesService.sendMessage(getCluster(clusterName), topicName, msg)
-        ).map(m -> new ResponseEntity<Void>(HttpStatus.OK))
+            messagesService.sendMessages(getCluster(clusterName), topicName, msg)
+        ).thenReturn(new ResponseEntity<Void>(HttpStatus.OK))
     ).doOnEach(sig -> audit(context, sig));
   }
 

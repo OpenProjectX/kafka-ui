@@ -3,6 +3,8 @@ export interface MessageFormData {
   content: string;
   headers: string;
   partition: number;
+  partitions: number[];
+  messageCount: number;
   keySerde: string;
   valueSerde: string;
   keySerdeParams?: Record<string, string>;

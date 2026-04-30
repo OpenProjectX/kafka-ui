@@ -1,6 +1,6 @@
 import React from 'react';
 import SendMessage from 'components/Topics/Topic/SendMessage/SendMessage';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render, WithRoute } from 'lib/testHelpers';
 import { clusterTopicPath } from 'lib/paths';
@@ -130,9 +130,6 @@ const renderComponent = async (
 
 const renderAndSubmitData = async (error: string[] = []) => {
   await renderComponent();
-  await userEvent.click(screen.getAllByRole('listbox')[0]);
-
-  await userEvent.click(screen.getAllByRole('option')[1]);
 
   (validateBySchema as Mock).mockImplementation(() => error);
   const submitButton = screen.getByRole('button', {
@@ -184,6 +181,8 @@ describe('SendMessage', () => {
       content: 'test-content',
       headers: '{"header1": "value1"}',
       partition: 3,
+      partitions: [3],
+      messageCount: 1,
       keySerde: 'Int32',
       valueSerde: 'String',
       keepContents: false,
@@ -192,11 +191,7 @@ describe('SendMessage', () => {
     it('should render form and produce message with prefilled values', async () => {
       await renderComponent(messageData);
 
-      expect(
-        screen.getByRole('listbox', {
-          name: 'Partition',
-        })
-      ).toHaveTextContent('Partition #3');
+      expect(screen.getByText('Partition #3')).toBeInTheDocument();
 
       expect(
         screen.getByRole('listbox', {
@@ -220,7 +215,9 @@ describe('SendMessage', () => {
         headers: { header1: 'value1' },
         key: messageData.key,
         keySerde: messageData.keySerde,
+        messageCount: 1,
         partition: messageData.partition,
+        partitions: [messageData.partition],
         value: messageData.content,
         valueSerde: messageData.valueSerde,
       });
@@ -243,19 +240,38 @@ describe('SendMessage', () => {
         headers: undefined,
         key: '{"f1":-93251214,"schema":"enim sit in fugiat dolor","f2":"deserunt culpa sunt"}',
         keySerde: 'Int32',
+        messageCount: 1,
         partition: 0,
+        partitions: [0],
         value: partialData.content,
         valueSerde: 'Int64',
       });
     });
 
+    it('should submit selected message count', async () => {
+      await renderComponent(messageData);
+
+      const messageCountInput = screen.getByLabelText('Message Count');
+      fireEvent.change(messageCountInput, { target: { value: '3' } });
+
+      const submitButton = screen.getByRole('button', {
+        name: 'Produce Message',
+      });
+      await userEvent.click(submitButton);
+
+      expect(sendTopicMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messageCount: 3,
+          partition: 3,
+          partitions: [3],
+        })
+      );
+    });
+
     it('should display correct partition in dropdown', async () => {
       await renderComponent(messageData);
 
-      const partitionDropdown = screen.getByRole('listbox', {
-        name: 'Partition',
-      });
-      expect(partitionDropdown).toHaveTextContent('Partition #3');
+      expect(screen.getByText('Partition #3')).toBeInTheDocument();
     });
 
     it('should close sidebar after submitting', async () => {
@@ -280,11 +296,7 @@ describe('SendMessage', () => {
     it('should render form with default values', async () => {
       await renderComponent();
 
-      expect(
-        screen.getByRole('listbox', {
-          name: 'Partition',
-        })
-      ).toHaveTextContent('Partition #0');
+      expect(screen.getByText('Partition #0')).toBeInTheDocument();
 
       expect(
         screen.getByRole('listbox', {
@@ -308,7 +320,9 @@ describe('SendMessage', () => {
         headers: undefined,
         key: '{"f1":-93251214,"schema":"enim sit in fugiat dolor","f2":"deserunt culpa sunt"}',
         keySerde: 'Int32',
+        messageCount: 1,
         partition: 0,
+        partitions: [0],
         value:
           '{"f1":-93251214,"schema":"enim sit in fugiat dolor","f2":"deserunt culpa sunt"}',
         valueSerde: 'Int64',

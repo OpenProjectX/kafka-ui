@@ -5,6 +5,7 @@ import { RouteParamsClusterTopic } from 'lib/paths';
 import { Button } from 'components/common/Button/Button';
 import Editor from 'components/common/Editor/Editor';
 import InputWithOptions from 'components/common/InputWithOptions/InputWithOptions';
+import MultiSelect from 'components/common/MultiSelect/MultiSelect.styled';
 import Select from 'components/common/Select/Select';
 import Switch from 'components/common/Switch/Switch';
 import Tooltip from 'components/common/Tooltip/Tooltip';
@@ -20,6 +21,7 @@ import {
   SerdeUsage,
 } from 'generated-sources';
 import { MessageFormData } from 'lib/interfaces/message';
+import { Option } from 'react-multi-select-component';
 
 import * as S from './SendMessage.styled';
 import {
@@ -65,14 +67,25 @@ const SendMessage: React.FC<SendMessageProps> = ({
   );
 
   const formDefaults = React.useMemo(
-    () => ({
-      ...defaultValues,
-      ...(urlKeySerde ? { keySerde: urlKeySerde } : {}),
-      ...(urlValueSerde ? { valueSerde: urlValueSerde } : {}),
-      partition: Number(partitionOptions[0]?.value || 0),
-      keepContents: false,
-      ...messageData,
-    }),
+    () => {
+      const defaultPartition = Number(partitionOptions[0]?.value || 0);
+      const selectedPartitions =
+        messageData?.partitions ||
+        (messageData?.partition !== undefined
+          ? [messageData.partition]
+          : [defaultPartition]);
+
+      return {
+        ...defaultValues,
+        ...(urlKeySerde ? { keySerde: urlKeySerde } : {}),
+        ...(urlValueSerde ? { valueSerde: urlValueSerde } : {}),
+        partition: selectedPartitions[0] ?? defaultPartition,
+        partitions: selectedPartitions,
+        messageCount: 1,
+        keepContents: false,
+        ...messageData,
+      };
+    },
     [defaultValues, partitionOptions, messageData, urlKeySerde, urlValueSerde]
   );
 
@@ -157,11 +170,24 @@ const SendMessage: React.FC<SendMessageProps> = ({
     content,
     headers,
     partition,
+    partitions,
+    messageCount,
     keySerdeParams,
     valueSerdeParams,
     keepContents,
   }: MessageFormData) => {
     let errors: string[] = [];
+    const selectedPartitions =
+      partitions === undefined ? [partition || 0] : partitions;
+    const selectedMessageCount = Number(messageCount) || 0;
+
+    if (selectedPartitions.length === 0) {
+      errors.push('At least one partition must be selected');
+    }
+
+    if (!Number.isInteger(selectedMessageCount) || selectedMessageCount < 1) {
+      errors.push('Message count must be greater than zero');
+    }
 
     if (formKeySerde) {
       const selectedKeySerde = serdes.key?.find((k) => k.name === formKeySerde);
@@ -206,7 +232,9 @@ const SendMessage: React.FC<SendMessageProps> = ({
         key: key || null,
         value: content || null,
         headers: parsedHeaders,
-        partition: partition || 0,
+        partition: selectedPartitions[0] || 0,
+        partitions: selectedPartitions,
+        messageCount: selectedMessageCount,
         keySerde: formKeySerde,
         valueSerde: formValueSerde,
         ...(keySerdeParams && Object.keys(keySerdeParams).length > 0
@@ -231,19 +259,57 @@ const SendMessage: React.FC<SendMessageProps> = ({
       <form onSubmit={handleSubmit(submit)}>
         <S.Columns>
           <S.FlexItem>
-            <InputLabel id="partitionOptionsLabel">Partition</InputLabel>
+            <InputLabel id="partitionOptionsLabel">Partitions</InputLabel>
             <Controller
               control={control}
-              name="partition"
-              render={({ field: { name, onChange, value } }) => (
-                <Select
-                  id="selectPartitionOptions"
-                  aria-labelledby="partitionOptionsLabel"
-                  name={name}
-                  onChange={onChange}
+              name="partitions"
+              render={({ field: { onChange, value } }) => (
+                <MultiSelect
+                  labelledBy="partitionOptionsLabel"
                   minWidth="100%"
                   options={partitionOptions}
-                  value={value}
+                  value={(value || [])
+                    .map((selectedPartition) =>
+                      partitionOptions.find(
+                        ({ value: optionValue }) =>
+                          Number(optionValue) === selectedPartition
+                      )
+                    )
+                    .filter(Boolean) as Option[]}
+                  onChange={(selected: Option[]) =>
+                    onChange(
+                      selected.map(({ value: optionValue }) =>
+                        Number(optionValue)
+                      )
+                    )
+                  }
+                  disabled={isSubmitting}
+                  overrideStrings={{ selectSomeItems: 'Select partitions' }}
+                />
+              )}
+            />
+          </S.FlexItem>
+          <S.FlexItem>
+            <InputLabel htmlFor="messageCount">Message Count</InputLabel>
+            <Controller
+              control={control}
+              name="messageCount"
+              render={({ field: { name, onChange, value } }) => (
+                <S.NumberInput
+                  id="messageCount"
+                  name={name}
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={value ?? ''}
+                  disabled={isSubmitting}
+                  onChange={(event) =>
+                    onChange(
+                      event.target.value === ''
+                        ? undefined
+                        : Number(event.target.value)
+                    )
+                  }
                 />
               )}
             />

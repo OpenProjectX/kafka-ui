@@ -4305,6 +4305,14 @@ components:
         partition:
           type: integer
           format: int32
+        partitions:
+          type: array
+          items:
+            type: integer
+            format: int32
+        messageCount:
+          type: integer
+          format: int32
         key:
           type: string
           nullable: true
