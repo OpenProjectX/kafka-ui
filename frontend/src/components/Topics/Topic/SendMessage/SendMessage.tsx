@@ -66,28 +66,31 @@ const SendMessage: React.FC<SendMessageProps> = ({
     [topic]
   );
 
-  const formDefaults = React.useMemo(
-    () => {
-      const defaultPartition = Number(partitionOptions[0]?.value || 0);
-      const selectedPartitions =
-        messageData?.partitions ||
-        (messageData?.partition !== undefined
-          ? [messageData.partition]
-          : [defaultPartition]);
+  const formDefaults = React.useMemo(() => {
+    const defaultPartition = Number(partitionOptions[0]?.value || 0);
+    const selectedPartitions =
+      messageData?.partitions ||
+      (messageData?.partition !== undefined
+        ? [messageData.partition]
+        : [defaultPartition]);
 
-      return {
-        ...defaultValues,
-        ...(urlKeySerde ? { keySerde: urlKeySerde } : {}),
-        ...(urlValueSerde ? { valueSerde: urlValueSerde } : {}),
-        partition: selectedPartitions[0] ?? defaultPartition,
-        partitions: selectedPartitions,
-        messageCount: 1,
-        keepContents: false,
-        ...messageData,
-      };
-    },
-    [defaultValues, partitionOptions, messageData, urlKeySerde, urlValueSerde]
-  );
+    return {
+      ...defaultValues,
+      ...(urlKeySerde ? { keySerde: urlKeySerde } : {}),
+      ...(urlValueSerde ? { valueSerde: urlValueSerde } : {}),
+      partition: selectedPartitions[0] ?? defaultPartition,
+      partitions: selectedPartitions,
+      messageCount: 1,
+      keepContents: false,
+      ...messageData,
+    };
+  }, [
+    defaultValues,
+    partitionOptions,
+    messageData,
+    urlKeySerde,
+    urlValueSerde,
+  ]);
 
   const {
     handleSubmit,
@@ -268,14 +271,16 @@ const SendMessage: React.FC<SendMessageProps> = ({
                   labelledBy="partitionOptionsLabel"
                   minWidth="100%"
                   options={partitionOptions}
-                  value={(value || [])
-                    .map((selectedPartition) =>
-                      partitionOptions.find(
-                        ({ value: optionValue }) =>
-                          Number(optionValue) === selectedPartition
+                  value={
+                    (value || [])
+                      .map((selectedPartition) =>
+                        partitionOptions.find(
+                          ({ value: optionValue }) =>
+                            Number(optionValue) === selectedPartition
+                        )
                       )
-                    )
-                    .filter(Boolean) as Option[]}
+                      .filter(Boolean) as Option[]
+                  }
                   onChange={(selected: Option[]) =>
                     onChange(
                       selected.map(({ value: optionValue }) =>

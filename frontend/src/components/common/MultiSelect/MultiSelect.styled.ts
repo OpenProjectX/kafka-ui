@@ -5,9 +5,23 @@ const MultiSelect = styled(ReactMultiSelect)<{
   minWidth?: string;
   height?: string;
 }>`
+  position: relative;
+  z-index: 20;
   min-width: ${({ minWidth }) => minWidth || '200px;'};
   height: ${({ height }) => height ?? '32px'};
   font-size: 14px;
+
+  .dropdown-content {
+    z-index: 1000 !important;
+  }
+
+  .panel-content,
+  .select-panel,
+  .options {
+    background-color: ${({ theme }) =>
+      theme.select.backgroundColor.normal} !important;
+  }
+
   .search input {
     color: ${({ theme }) => theme.input.color.normal};
     background-color: ${(props) =>
@@ -95,10 +109,10 @@ const MultiSelect = styled(ReactMultiSelect)<{
       input[type='checkbox']::before {
         content: ' ';
         position: absolute;
-        top: -5px;
-        left: -24px;
+        top: -3px;
+        left: -23px;
 
-        width: 17px;
+        width: 6px;
         height: 1px;
         transform: rotate(45deg);
         background-color: ${({ theme }) =>
@@ -108,9 +122,9 @@ const MultiSelect = styled(ReactMultiSelect)<{
         content: ' ';
         position: absolute;
         top: -5px;
-        left: -25px;
+        left: -20px;
 
-        width: 17px;
+        width: 11px;
         height: 1px;
         transform: rotate(-45deg);
         background-color: ${({ theme }) =>
