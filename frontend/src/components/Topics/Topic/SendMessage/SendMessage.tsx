@@ -28,6 +28,7 @@ import {
   getDefaultValues,
   getPartitionOptions,
   getSerdeOptions,
+  generateValueFromSchema,
   validateBySchema,
 } from './utils';
 
@@ -104,6 +105,10 @@ const SendMessage: React.FC<SendMessageProps> = ({
 
   const keySerde = useWatch({ control, name: 'keySerde' });
   const valueSerde = useWatch({ control, name: 'valueSerde' });
+  const watchedValueSerdeParams = useWatch({
+    control,
+    name: 'valueSerdeParams',
+  });
 
   const keySerdeParameters = React.useMemo(
     () => getSerdeParameters(keySerde, serdes.key),
@@ -127,9 +132,31 @@ const SendMessage: React.FC<SendMessageProps> = ({
   React.useEffect(() => {
     if (prevValueSerde.current !== valueSerde) {
       setValue('valueSerdeParams', undefined);
+      const selectedValueSerde = serdes.value?.find(
+        (s) => s.name === valueSerde
+      );
+      const generatedContent = generateValueFromSchema(selectedValueSerde);
+      if (generatedContent !== undefined) {
+        setValue('content', generatedContent);
+      }
       prevValueSerde.current = valueSerde;
     }
-  }, [valueSerde, setValue]);
+  }, [valueSerde, setValue, serdes.value]);
+
+  React.useEffect(() => {
+    if (
+      !watchedValueSerdeParams ||
+      Object.keys(watchedValueSerdeParams).length === 0
+    ) {
+      return;
+    }
+
+    const selectedValueSerde = serdes.value?.find((s) => s.name === valueSerde);
+    const generatedContent = generateValueFromSchema(selectedValueSerde);
+    if (generatedContent !== undefined) {
+      setValue('content', generatedContent);
+    }
+  }, [setValue, serdes.value, valueSerde, watchedValueSerdeParams]);
 
   const renderParameters = (
     parameters: SerdeParameter[],

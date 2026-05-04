@@ -15,7 +15,7 @@ jsf.option('fillProperties', false);
 jsf.option('alwaysFakeOptionals', true);
 jsf.option('failOnInvalidFormat', false);
 
-const generateValueFromSchema = (preferred?: SerdeDescription) => {
+export const generateValueFromSchema = (preferred?: SerdeDescription) => {
   if (!preferred?.schema) {
     return undefined;
   }
